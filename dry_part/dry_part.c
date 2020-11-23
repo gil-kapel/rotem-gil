@@ -3,7 +3,7 @@
 #include "assert.h"
 
 void stringDuplicator(char* string, int times){
-    assert(string != NULL && times > 0);
+    assert(string && times > 0);
     int length = strlen(string);
     char* out = malloc(length*times);
     assert(out);
