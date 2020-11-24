@@ -5,7 +5,7 @@ typedef struct Date_t
     int year;
 } *Date;
 
-//dateCreate: Allocates a new date.
+//Allocates a new date.
 Date dateCreate(int day, int month, int year)
 {
     Date date = malloc(sizeof(*date));
@@ -14,4 +14,14 @@ Date dateCreate(int day, int month, int year)
         return NULL;
     }
     return date;
+}
+
+//Deallocates an existing Date.
+void dateDestroy(Date date)
+{
+    if (*PriorityQueue == NULL)
+    {
+        return;
+    }
+    free(date);
 }
