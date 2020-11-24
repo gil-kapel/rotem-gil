@@ -1,0 +1,17 @@
+typedef struct Date_t
+{
+    int day;
+    int month;
+    int year;
+} *Date;
+
+//dateCreate: Allocates a new date.
+Date dateCreate(int day, int month, int year)
+{
+    Date date = malloc(sizeof(*date));
+    if (!date) 
+    {
+        return NULL;
+    }
+    return date;
+}
