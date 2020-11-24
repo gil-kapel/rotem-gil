@@ -1,6 +1,8 @@
 #include "stdlib.h"
 #include "string.h"
 #include "assert.h"
+#include <stdio.h>
+#define SIZE 1000 
 
 char* stringDuplicator(char* string, int times){
     assert(string);
@@ -16,10 +18,10 @@ char* stringDuplicator(char* string, int times){
     return out - length*times;
 }
 
-#include <stdio.h>
+
 
 int main(){
-    char *string = malloc(1000);
+    char *string = malloc(SIZE);
     int times;
     char *duplicate = {NULL};
     printf("Enter a string and number of times:\n");
