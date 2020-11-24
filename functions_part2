@@ -25,3 +25,13 @@ void dateDestroy(Date date)
     }
     free(date);
 }
+
+//Creates a copy of target Date.
+Date dateCopy(Date date)
+{
+    if(date == NULL)
+    {
+        return NULL;
+    }
+    strcpy(Date,date);
+}
