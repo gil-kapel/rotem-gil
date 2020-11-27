@@ -12,15 +12,17 @@ char* stringDuplicator(char* string, int times)
         char* out = malloc(sizeof(char)*(length*times)+1);
         if(!out)
         {
+            printf("wrong out!\n");
             return NULL;
         }
-        for (int i=0; i<times; i++)
+        char* out_temp = out;
+        for (int i=0; i < times; i++)
         {
-            strcpy(out,string);
-            out += length;
+            strcpy(out_temp,string);
+            out_temp += length;
         }
-        *out = '\0';
-        return (out - length*times);
+        *(out_temp) = '\0';
+        return  out;
     }
     else
     {
@@ -32,7 +34,7 @@ char* stringDuplicator(char* string, int times)
 
 int main(){
     char *string = malloc(SIZE);
-    int times;
+    int times = 0;
     char *duplicate = {NULL};
     printf("Enter a string and number of times:\n");
     scanf("%s %d", string, &times);
