@@ -1,6 +1,6 @@
-#include "stdlib.h"
-#include "string.h"
-#include "assert.h"
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
 #include <stdio.h>
 #define SIZE 1000 
 
