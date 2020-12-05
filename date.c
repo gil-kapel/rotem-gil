@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "date.h"
+#define NONE 0
 #define MIN_DAY 1
 #define MAX_DAY 30
 #define MIN_MONTH 1
@@ -30,8 +31,8 @@ Date dateCreate(int day, int month, int year)
     {
         return NULL;
     }
-    Date date = malloc(sizeof(*date));
-    if (!date) 
+    Date date = malloc(sizeof(date));
+    if (date == NULL) 
     {
         return NULL;
     }
@@ -44,7 +45,7 @@ Date dateCreate(int day, int month, int year)
 //Deallocates an existing Date
 void dateDestroy(Date date)
 {
-    if(!date)
+    if(date == NULL)
     {
         return;
     }
@@ -54,7 +55,7 @@ void dateDestroy(Date date)
 //Creates a copy of target Date
 Date dateCopy(Date date)
 {
-    if(!date)
+    if(date == NULL)
     {
         return NULL;
     }
@@ -64,7 +65,7 @@ Date dateCopy(Date date)
 //Returns the day, month and year of a date
 bool dateGet(Date date, int* day, int* month, int* year)
 {
-    if((!day) || (!month) || (!year))
+    if((day == NULL) || (month == NULL) || (year == NULL))
     {
         return false;
     }
@@ -84,9 +85,9 @@ static int dateInDays(Date date)
 //Compares to dates and return which comes first
 int dateCompare(Date date1, Date date2)
 {
-    if((!date1) || (!date2))
+    if((date1 == NULL) || (date2 == NULL))
     {
-        return false;
+        return NONE;
     }
     return ((dateInDays(date1)) - (dateInDays(date2)));
 }
@@ -95,7 +96,7 @@ int dateCompare(Date date1, Date date2)
 //Increases the date by one day
 void dateTick(Date date)
 {
-    if(!date)
+    if(date == NULL)
     {
         return;
     }
@@ -115,4 +116,7 @@ void dateTick(Date date)
         (date->day)++;
     }
 }
+
+
+
 
