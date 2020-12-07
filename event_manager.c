@@ -1,3 +1,27 @@
+
+struct event
+{
+    int id;
+    int name;
+    struct date;
+}
+
+struct member
+{
+    int id;
+    int name;
+    int how_many_events?
+}
+
+struct EventManager_t
+{
+    PriorityQueue Event_list = pqCreate(,,,,,,);
+    PriorityQueue Members_list = pqCreate(,,,,,,)
+}
+
+pqInsert(Event_list, member, member->how_many_times);
+
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
