@@ -110,7 +110,7 @@ if(event_id < VALID_ID)
 
 }
 
-static Event eventFind(Eventmanager em, int id)
+static Event eventFind(EventManager em, int id)
 {
 	for (PQElementPriority ptr = em->events; ptr != NULL; ptr = ptr->next) 
 	{
@@ -119,7 +119,7 @@ static Event eventFind(Eventmanager em, int id)
 			return ptr;
 		}
 	}
-	return NULL;
+	return EM_NULL_ARGUMENT;
 }
 
 
@@ -133,8 +133,11 @@ EventManagerResult emRemoveEvent(EventManager em, int event_id)
 	{
 	return EM_INVALID_EVENT_ID;
 	}
-	compareEvetsId(Event event, int id)
-	pqContains(em->events,em->events->event);
+	Event event_to_remove = eventFind(em, event_id)
+	if(!(pqContains(em->events, event_to_remove)))
+	{
+		return EM_EVENT_NOT_EXISTS;
+	}
 	freeEventInEm(em);
 }
 
@@ -269,54 +272,12 @@ EventManagerResult emRemoveEvent(EventManager em, int event_id)
 // 	return EM_SUCCESS;
 // }
 
-
-// EventManagerResult emAddEventByDate(EventManager em, char* event_name, Date date, int event_id)
-// {
-// retur;
-// }
-
 // static copy_element(PQElement event)
 // {
 // 	Event new_event = eventCopy((Event)event);
 // 	return new_event;
 
 // }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
