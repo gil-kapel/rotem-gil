@@ -138,7 +138,9 @@ EventManagerResult emRemoveEvent(EventManager em, int event_id)
 	{
 		return EM_EVENT_NOT_EXISTS;
 	}
-	freeEventInEm(em);
+	//freeEventInEm(em);
+	pqRemoveElement(em->events, event_to_remove);
+	return EM_SUCCESS;
 }
 
 
@@ -279,75 +281,10 @@ EventManagerResult emRemoveEvent(EventManager em, int event_id)
 
 // }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+		    
+		    
+		    
+		    
 
 
 
