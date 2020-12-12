@@ -93,6 +93,14 @@ void destroyEventManager(EventManager em)
 	dateDestroy(em->first_date);
 }
 
+static bool findEventIdInEm(EventManager em, int id)
+{
+	for (PQElementPriority ptr = em->events; ptr != NULL; ptr = ptr->next) 
+	{
+		compareEventsId(ptr->event_id, id) ? (return true) : (return false);
+	}
+
+
 EventManagerResult emAddEventByDate(EventManager em, char* event_name, Date date, int event_id)
 {
 	if((em == NULL) || (event_name == NULL) || (date == NULL))
@@ -107,10 +115,16 @@ if(event_id < VALID_ID)
 {
 	return EM_INVALID_EVENT_ID;
 }
-
+if(findEventIdInEm(EventManager em, int id))
+{
+	return EM_EVENT_ID_ALREADY_EXISTS;
 }
 
-static Event eventFind(EventManager em, int id)
+return EM_SUCCESS;
+}
+
+
+static Event findEventFromId(EventManager em, int id)
 {
 	for (PQElementPriority ptr = em->events; ptr != NULL; ptr = ptr->next) 
 	{
@@ -133,7 +147,7 @@ EventManagerResult emRemoveEvent(EventManager em, int event_id)
 	{
 	return EM_INVALID_EVENT_ID;
 	}
-	Event event_to_remove = eventFind(em, event_id)
+	Event event_to_remove = findEventFromId(em, event_id)
 	if(!(pqContains(em->events, event_to_remove)))
 	{
 		return EM_EVENT_NOT_EXISTS;
@@ -280,6 +294,7 @@ EventManagerResult emRemoveEvent(EventManager em, int event_id)
 // 	return new_event;
 
 // }
+
 
 		    
 		    
