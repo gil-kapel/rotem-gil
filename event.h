@@ -29,6 +29,11 @@ Event eventCopy(Event event);
 * 	false if one of pointers is NULL.
 * 	Otherwise true and the event is assigned to the pointers.
 */
+
+// Event compareEvetsId(Event event, int id);
+
+bool compareEventsId(int id1, int id2);
+
 char* getEventName(Event event);
 
 Date getEventdate(Event event);
