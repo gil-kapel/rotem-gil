@@ -31,7 +31,7 @@ Date dateCreate(int day, int month, int year)
     {
         return NULL;
     }
-    Date date = malloc(sizeof(date));
+    Date date = malloc(sizeof(*date));
     if (date == NULL) 
     {
         return NULL;
@@ -78,7 +78,7 @@ bool dateGet(Date date, int* day, int* month, int* year)
 //Convert date to days
 static int dateInDays(Date date)
 {
-    int date_in_days = (date->day) + ((date->month) * MAX_MONTH) + ((date->year) *	DAYS_IN_YEAR);
+    int date_in_days = (date->day) + ((date->month) * MAX_DAY) + ((date->year) * DAYS_IN_YEAR);
 	return date_in_days;
 }
 
@@ -105,18 +105,19 @@ void dateTick(Date date)
         date->day = MIN_DAY;
         date->month = MIN_MONTH;
         (date->year)++;
+        return;
     }
     else if(((date->day) == MAX_DAY) && ((date->month) < MAX_MONTH))
     {
         date->day = MIN_DAY;
         (date->month)++;
+        return;
     }
     else
     {
         (date->day)++;
     }
 }
-
 
 
 
