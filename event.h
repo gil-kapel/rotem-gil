@@ -1,47 +1,27 @@
 #ifndef EVENT_H_
 #define EVENT_H_
-#include <stdbool.h>
 #include "date.h"
+#include "priority_queue.h"
+#include <stdbool.h>
 
-/** Type for defining the event */
-typedef struct Event_t* Event;
+typedef struct Event_t *Event;
 
+Event eventCreate(char* name, int id, Date date);//, PriorityQueue members_per_event);// change in em
 
-/**
-* eventCreate: Allocates a new event.
-* 	NULL - if allocation failed or event is illegal.
-* 	A new event in case of success.
-*/
-Event eventCreate(char* name, int id, Date date);
+//Creates a copy of target event
+Event eventCopy(Event event);
 
-/**
-* eventDestroy: Deallocates an existing event.
-*/
+//Deallocates an existing Date
 void eventDestroy(Event event);
 
-/**
-* eventCopy: Creates a copy of target event.
-*/
+bool eventCompare(Event event1, Event event2);
 
-Event eventCopy(Event event);
-/**
-* eventGet: Returns the details of a event
-* 	false if one of pointers is NULL.
-* 	Otherwise true and the event is assigned to the pointers.
-*/
-
-// Event compareEvetsId(Event event, int id);
-
-bool compareEventsId(int id1, int id2);
+int getEventId(Event event);
 
 char* getEventName(Event event);
 
 Date getEventdate(Event event);
-// bool eventGet(Event event, char** name, int* id, Date date);
 
-/**
-* eventCompare: compares to events and return which comes first
-*/
-bool eventCompare(Event event1, Event event2);
+char* getNameFromEvent(Event event);
 
 #endif //EVENT_H_
