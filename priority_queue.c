@@ -11,22 +11,21 @@
 #define RESET_ITERATOR(queue) queue->iterator = NULL;
 
 /*!
-* Macro for testing if a copy function succeed
-* free the node if failed
-* destroy the queue if the failure was when copying a new queue
-*/ 
-#define PQ_COPY_DATA_TEST(queue, node, data_type) \
-    (node->data_type == NULL)\
-    {\
-        free(node);\
-        free(queue);
-/*!
 * Macro for testing if a NULL pointer was sent
 * or if a malloc failed
 */ 
-#define PQ_NULL_TEST(data_type, result)\
+#define PQ_NULL_TEST(ptr, result)\
+    if (ptr == NULL)\
+    {\
+        return result;\
+    }
+/*!
+* Macro for testing if a NULL data was sent
+*/
+#define PQ_NULL_DATA_TEST(queue,data_type, result)\
     if (data_type == NULL)\
     {\
+        RESET_ITERATOR(queue)\
         return result;\
     }
 
@@ -49,55 +48,73 @@ struct PriorityQueue_t
     ComparePQElementPriorities comparePriorities;
 };
 
-static Node pqNodeCreate()
+static Node pqNodeCreate(PriorityQueue queue, PQElement element,
+                                           PQElementPriority priority)
 {
     Node newNode = malloc(sizeof(*newNode));
     PQ_NULL_TEST(newNode, NULL)
-    newNode->element = NULL;
-    newNode->priority = NULL;
     newNode->next = NULL;
+    newNode->element = queue->copyElement(element);
+    if(newNode->element == NULL)
+    {
+        free(newNode);
+        return NULL;
+    }
+    newNode->priority = queue->copyPriority(priority);
+    if(newNode->priority == NULL)
+    {
+        free(newNode);
+        return NULL;
+    }
     return newNode;
 }
+/*!
+* There are three places to store a new node in the queue:
+* 1) Head of the queue -> if the new priority is the highest or if the queue is empty.
+* 2) Buttom of the queue -> if the new priority is the lowest priority in the queue.
+* 3) Middle of the queue -> all other opptions.
+* therefore 3 functions to insert the new node at the right place:
+*/
 
-//* insert a new node to the queue, insert the new node after the 'position' node or at the top of the queue
-static PriorityQueueResult pqInsertNewNode(PriorityQueue queue, PQElement element,
+static PriorityQueueResult pqInsertNodeToHead(PriorityQueue queue, PQElement element,
                                            PQElementPriority priority, Node position)
 {
     PQ_NULL_TEST(queue, PQ_OUT_OF_MEMORY)
-    Node newNode = pqNodeCreate();
-    newNode->element = queue->copyElement(element);
-    if PQ_COPY_DATA_TEST(NULL, newNode, element)
-        return PQ_OUT_OF_MEMORY;
-    }
-    newNode->priority = queue->copyPriority(priority);
-    if PQ_COPY_DATA_TEST(NULL, newNode, priority)
-        return PQ_OUT_OF_MEMORY;
-    }
-    //* there are 4 possibilites to add a newNode:
-    //* queue is empty -- 1) add to a free space
-    //* queue is full -- 2)add to the buttom, 3) add to the middle, 4) add to the top
-    if(queue->head == NULL) //an empty pq - add the first node to the queue
+    Node newNode = pqNodeCreate(queue, element, priority);
+    PQ_NULL_TEST(newNode, PQ_OUT_OF_MEMORY)
+    if(queue->head == NULL) 
     {
         queue->head = newNode;
     }
-    else if (position == NULL) //*the queue isn't empty, insert the new node to the buttom of the queue
+    else
     {
-        position->next = newNode; //*newNode->next is NULL already as created
-    }
-    else if (position == queue->head) //*add the newNode to the top of the queue
-    {
-        newNode->next = position;
+        newNode->next = queue->head;
         queue->head = newNode;
     }
-    else //* add the newNode to the middle of the queue
-    {
-        newNode->next = position->next;
-        position->next = newNode;
-    }
-
-
     return PQ_SUCCESS;
-} 
+}
+
+static PriorityQueueResult pqInsertNodeToMiddle(PriorityQueue queue, PQElement element,
+                                           PQElementPriority priority, Node position)
+{
+    PQ_NULL_TEST(queue, PQ_OUT_OF_MEMORY)
+    Node newNode = pqNodeCreate(queue, element, priority);
+    PQ_NULL_TEST(newNode, PQ_OUT_OF_MEMORY)
+    newNode->next = position->next;
+    position->next = newNode;
+    return PQ_SUCCESS;
+}
+
+static PriorityQueueResult pqInsertNodeToButtom(PriorityQueue queue, PQElement element,
+                                           PQElementPriority priority, Node position)
+{
+    PQ_NULL_TEST(queue, PQ_OUT_OF_MEMORY)
+    Node newNode = pqNodeCreate(queue, element, priority);
+    PQ_NULL_TEST(newNode, PQ_OUT_OF_MEMORY)
+    position->next = newNode;
+    return PQ_SUCCESS;
+}
+
 
 PriorityQueue pqCreate(CopyPQElement copy_element, FreePQElement free_element, 
                        EqualPQElements equal_elements, CopyPQElementPriority copy_priority,
@@ -120,34 +137,29 @@ PriorityQueue pqCreate(CopyPQElement copy_element, FreePQElement free_element,
 PriorityQueueResult pqClear(PriorityQueue queue)
 {
     PQ_NULL_TEST(queue, PQ_NULL_ARGUMENT)
-    
-    if(queue->head==NULL) //*the queue is empty
+    PQ_NULL_TEST(queue->head, PQ_SUCCESS) // The queue is empty
+    Node position = queue->head;
+    while (position)
     {
-        RESET_ITERATOR(queue);
-        return PQ_SUCCESS; 
+        queue->freeElement(position->element);
+        queue->freePriority(position->priority);
+        Node toDelete = position;
+        position = position->next;
+        toDelete->next  = NULL;
+        free(toDelete);
     }
-    Node head = queue->head;
-    while (head)
-    //free the element and priority of the node/
-    //copy the next node address and free the node itself
-    //- while loop will stop when there are no next node 
-    {
-        queue->freeElement(head->element);
-        queue->freePriority(head->priority);
-        Node tail = head;
-        head = head->next;
-        free(tail);
-    }
-    RESET_ITERATOR(queue);;
     return PQ_SUCCESS; 
-
 }
 
 void pqDestroy(PriorityQueue queue)
 {
     if(queue != NULL)
     {
-        pqClear(queue);
+        if(queue->head != NULL)
+        {
+            pqClear(queue);
+        }
+        queue->iterator = NULL;
         free(queue);
     }
 }
@@ -159,34 +171,21 @@ PriorityQueue pqCopy(PriorityQueue queue)
                                                 queue->copyPriority, queue->freePriority, queue->comparePriorities);
     if(queue->head == NULL) //* copy an empty queue
     {  
-        RESET_ITERATOR(queue);
         return newPriorityQueue;
     }
-    Node headNode = pqNodeCreate(); //*create a new node and copy the head of the origin queue to it
-    headNode->element = queue->copyElement(queue->head->element);
-    if PQ_COPY_DATA_TEST(newPriorityQueue, headNode, element)
-        RESET_ITERATOR(queue);
-        return NULL;
-    }
-    headNode->priority = queue->copyPriority(queue->head->priority);
-    if PQ_COPY_DATA_TEST(newPriorityQueue, headNode, priority)
-        RESET_ITERATOR(queue);
-        return NULL;
-    }
-    newPriorityQueue->head = headNode; //* save the head of the new queue
-    Node tail = queue->head->next;
-    while(tail) //*copy the queue from the second node / if the queue has only one node, it will be copied and won't get in the while loop
+    Node position = queue->head;
+    while(position) //* insert all of the queue nodes and the pqInsert function will arrange them correctly
     {
-        if(pqInsert(newPriorityQueue,tail->element,tail->priority) != PQ_SUCCESS) //* the pqInsert function will care that the nodes will enter in the right order
+        if(pqInsert(newPriorityQueue,position->element,position->priority) != PQ_SUCCESS)
         {
-            pqDestroy(newPriorityQueue); // if an element or priority copy won't succeed the new queue must be destroyed
-            RESET_ITERATOR(queue);
+            pqDestroy(newPriorityQueue);//if an element or priority copy won't succeed the new queue must be destroyed
+            RESET_ITERATOR(queue)
             return NULL;
         }
-        tail = tail->next;
+        position = position->next;
     }
-    RESET_ITERATOR(queue);
-    RESET_ITERATOR(newPriorityQueue);
+    RESET_ITERATOR(queue)
+    RESET_ITERATOR(newPriorityQueue)
     return newPriorityQueue;
 }
 
@@ -194,11 +193,11 @@ int pqGetSize(PriorityQueue queue)
 {
     PQ_NULL_TEST(queue, INVALID)
     int counter = EMPTY;
-    Node head = queue->head;
-    while (head) //start with the first node because when we create a new pq - head = NULL
+    Node position = queue->head;
+    while (position)
     {
         counter++;
-        head = head->next;
+        position = position->next;
     }
     return counter;
 }
@@ -207,122 +206,116 @@ bool pqContains(PriorityQueue queue, PQElement element)
 {
     PQ_NULL_TEST(queue, false)
     PQ_NULL_TEST(element, false)
-    Node head = queue->head;
-    while (head)
+    Node position = queue->head;
+    while (position)
     {
-        if (queue->equalElements(queue->head->element, element))
+        if (queue->equalElements(position->element, element))
         {
             return true;
         }
-        head = head->next;
+        position = position->next;
     }
     return false;
 }
 
 PriorityQueueResult pqInsert(PriorityQueue queue, PQElement element, PQElementPriority priority)
 {
-    PQ_NULL_TEST(queue, PQ_NULL_ARGUMENT)
-    if(element == NULL)
+    PQ_NULL_TEST(queue, PQ_NULL_ARGUMENT)    
+    RESET_ITERATOR(queue)
+    PQ_NULL_DATA_TEST(queue,element,PQ_NULL_ARGUMENT)
+    PQ_NULL_DATA_TEST(queue,priority,PQ_NULL_ARGUMENT)
+    if(queue->head==NULL) //* the queue is empty
     {
-        RESET_ITERATOR(queue)
-        return PQ_NULL_ARGUMENT;
+        return pqInsertNodeToHead(queue,element,priority,NULL); //add the new node to the head of the queue
     }
-    if(priority == NULL)
+    if(queue->comparePriorities(priority, queue->head->priority) >= EQUAL)
     {
-        RESET_ITERATOR(queue)
-        return PQ_NULL_ARGUMENT;
+        //*insert the new node to the top
+        return pqInsertNodeToHead(queue,element,priority,queue->head);
     }
     Node position = queue->head;
-    if (queue->head==NULL) //* the queue is empty
+    while(position->next)
     {
-        RESET_ITERATOR(queue);
-        return pqInsertNewNode(queue,element,priority,NULL); //add the new node to the head of the queue
-    }
-    while(position)
-    {
-        if(queue->comparePriorities(position->priority, priority) <= EQUAL)
-        //* if the new element has the highest priority, the new node will be insert to/
-        //  the top and become the new head of the queue
-        //  else the new node will insert after the position pointer *
+        if(queue->comparePriorities(priority, position->next->priority) >= EQUAL)
         {
-            RESET_ITERATOR(queue);
-            return pqInsertNewNode(queue,element,priority,position);
+            //*insert the new node before the position founded */
+            return pqInsertNodeToMiddle(queue,element,priority,position);
         }
         position = position->next;
     }
-    return PQ_SUCCESS;
+    return pqInsertNodeToButtom(queue,element,priority,position);//insert node to the button of the pq
 }
 
 PriorityQueueResult pqChangePriority(PriorityQueue queue, PQElement element,
                                      PQElementPriority old_priority, PQElementPriority new_priority)
 {
     PQ_NULL_TEST(queue, PQ_NULL_ARGUMENT)
-    if(element == NULL)
+    RESET_ITERATOR(queue)
+    PQ_NULL_DATA_TEST(queue,element,PQ_NULL_ARGUMENT)
+    PQ_NULL_DATA_TEST(queue,old_priority,PQ_NULL_ARGUMENT)
+    PQ_NULL_DATA_TEST(queue,new_priority,PQ_NULL_ARGUMENT)
+    Node position = queue->head;
+    while(position)
     {
-        RESET_ITERATOR(queue)
-        return PQ_NULL_ARGUMENT;
-    }
-    if(old_priority == NULL)
-    {
-        RESET_ITERATOR(queue)
-        return PQ_NULL_ARGUMENT;
-    }
-    if(new_priority == NULL)
-    {
-        RESET_ITERATOR(queue)
-        return PQ_NULL_ARGUMENT;
-    }
-    Node head = queue->head;
-    while(head)
-    {
-        if(queue->comparePriorities(head->priority, old_priority) < EQUAL)
+        if(queue->comparePriorities(position->priority, old_priority) > EQUAL)
         //* itarate the queue until reaches to the old priority
         {
-            head = head->next;
+            position = position->next;
             continue;
         }
-        else if(queue->comparePriorities(head->priority, old_priority) == EQUAL)
+        else if(queue->comparePriorities(position->priority, old_priority) == EQUAL)
         //**will replace the first node with the old priority
         {
-            if(queue->equalElements(element, head->element)) //**will replace only an identical element
+            if(queue->equalElements(element, position->element)) //**will replace only an identical element
             {
-                PriorityQueueResult removeResult = pqRemoveElement(queue, head->element);
+                PriorityQueueResult removeResult = pqRemoveElement(queue, position->element);
                 //* remove the element and insert a new one
                 if(removeResult != PQ_SUCCESS) //* if the pqRemoveElement function didn't work
                 {
                     return removeResult;
                 }
-                return pqInsert(queue, element, new_priority); //* insert the new node with the new priority
+                PriorityQueueResult insertResult = pqInsert(queue, element, new_priority);
+                //* insert the new node with the new priority
+                if(insertResult != PQ_SUCCESS)
+                {
+                    return insertResult;
+                }
+                return PQ_SUCCESS;
             }
-            head = head->next;
+            position = position->next;
             continue;
         }
-        RESET_ITERATOR(queue);
-        return PQ_ELEMENT_DOES_NOT_EXISTS;
+        position = NULL;
     }
-    RESET_ITERATOR(queue);
     return PQ_ELEMENT_DOES_NOT_EXISTS;
 }
 
 PriorityQueueResult pqRemove(PriorityQueue queue)
 {
     PQ_NULL_TEST(queue, PQ_NULL_ARGUMENT)
+    if(queue->iterator != NULL)
+    {
+        RESET_ITERATOR(queue)
+    }    
+    if(queue->head==NULL)
+    {
+        return PQ_SUCCESS;
+    }
     queue->freeElement(queue->head->element);
     queue->freePriority(queue->head->priority);
     Node toDelete = queue->head;
     queue->head = queue->head->next;
+    toDelete->next = NULL;
     free(toDelete);
-    RESET_ITERATOR(queue)
     return PQ_SUCCESS; 
 }
 
 PriorityQueueResult pqRemoveElement(PriorityQueue queue, PQElement element)
 {
     PQ_NULL_TEST(queue, PQ_NULL_ARGUMENT)
-    if(queue->head == NULL)
-    //* empty queue
+    RESET_ITERATOR(queue)
+    if(queue->head == NULL) //* empty queue
     {
-        RESET_ITERATOR(queue)
         return PQ_SUCCESS;
     }
     if(queue->equalElements(queue->head->element, element) == true)
@@ -330,14 +323,13 @@ PriorityQueueResult pqRemoveElement(PriorityQueue queue, PQElement element)
     {
         return pqRemove(queue);
     }
-    if(queue->head->next == NULL)
-    //* the queue contains one node that don't have the needed element
+    else if(queue->head->next == NULL)
+    //* the queue contains one node that don't need to be removed
     {
-        RESET_ITERATOR(queue)
         return PQ_ELEMENT_DOES_NOT_EXISTS;
     }
     Node position = queue->head;
-    while(position)
+    while(position->next)
     {
         if(queue->equalElements(position->next->element, element) == true)
         //*compare the next element, save the previus node to patch the queue after the delete
@@ -346,15 +338,12 @@ PriorityQueueResult pqRemoveElement(PriorityQueue queue, PQElement element)
             queue->freePriority(position->next->priority);
             Node toDelete = position->next;
             position->next = position->next->next;
-            //*before removing the node, we change the next pointer of the previous node
+            toDelete->next = NULL;
             free(toDelete);
-            RESET_ITERATOR(queue)
             return PQ_SUCCESS; 
-
         }
         position = position->next;
     }
-    RESET_ITERATOR(queue);
     return PQ_ELEMENT_DOES_NOT_EXISTS; 
 }
 
@@ -363,7 +352,7 @@ PQElement pqGetFirst(PriorityQueue queue)
     PQ_NULL_TEST(queue, NULL)
     if(queue->head == NULL)
     {
-        RESET_ITERATOR(queue);;
+        RESET_ITERATOR(queue)
         return NULL;
     }
     queue->iterator = queue->head;
@@ -374,9 +363,9 @@ PQElement pqGetNext(PriorityQueue queue)
 {
     PQ_NULL_TEST(queue, NULL)
     PQ_NULL_TEST(queue->iterator, NULL)
-    if(queue->iterator->next == NULL)
+    else if(queue->iterator->next == NULL)
     {
-        RESET_ITERATOR(queue);
+        RESET_ITERATOR(queue)
         return NULL;
     }
     queue->iterator = queue->iterator->next;
