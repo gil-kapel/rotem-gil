@@ -6,10 +6,11 @@
 #include "event_manager.h"
 #include "priority_queue.h"
 #include "date.h"
+#include "event.h"
+#define INIT_AMOUNT 0
 
 
-
-typedef struct Member_t
+struct Member_t
 {
 	char* member_name;
 	int* member_id;
@@ -27,7 +28,7 @@ static char* stringCopy(char* new_str)
     return copy_str ? strcpy(copy_str, new_str) : NULL;
 }
 
-Member memberCreate(char* name, int* id, int* amount)//, int amount)//,PriorityQueue members_per_event);
+Member memberCreate(char* name, int* id)//, int* amount)//, int amount)//,PriorityQueue members_per_event);
 {
     Member member = malloc(sizeof(*member));
     if (member == NULL) 
@@ -49,12 +50,13 @@ Member memberCreate(char* name, int* id, int* amount)//, int amount)//,PriorityQ
         return NULL;
     }
     *(member->member_id) = *id;
+    free(id);
     int* amount = malloc(sizeof(int));
     if (amount == NULL)
     {
         return NULL;
     }
-    *(member->amount) = *amount;
+    *(member->amount) = INIT_AMOUNT;
     //member->amount = amount;
 	return member;
 }
@@ -79,7 +81,7 @@ void memberDestroy(Member member)
     free(member);
 }
 
-bool memberCompare((Member member1, Member member2)
+bool memberCompare(Member member1, Member member2)
 {
     if((member1 == NULL) || (member2 == NULL))
     {
@@ -139,11 +141,13 @@ void freeMemberId(int* member_id)
 
 int memberIdCompare(int* member_id1, int* member_id2)
 {
-    if((member_id1 == NULL) || (member_id2 == NULL))
-    {
-        return NULL;
-    } 
-    return (*(member_id1) - (*member_id2));
+    // if((member_id1 == NULL) || (member_id2 == NULL))
+    // {
+    //     return NULL;
+    // } 
+    int first_id = *member_id1;
+    int second_id = *member_id2;
+    return (first_id - second_id);
 }
 
 
@@ -173,16 +177,21 @@ int* copyAmount(int* amount)
 
 void amountDestroy(int* amount)
 {
-    free(samount);
+    free(amount);
 }
 
 
-int amountCompare(int* amount1, int* amount2)
+int amountCompare(Member member1, Member member2)
 {
-    if((amount1 == NULL) || (amount2 == NULL))
+    int amount_delta = (getMemberAmount(member1)) - (getMemberAmount(member2));
+    if(!amount_delta)
     {
-        return NULL;
-    } 
-    return (*(amount1) - (*amount2));
+        return amount_delta;
+    }
+    return (getMemberId(member1)-getMemberId(member2));
 }
 
+int* getMemberAmount(Member member)
+{
+    return member->amount;
+}
