@@ -93,7 +93,7 @@ static void freeMemberAmount(PQElementPriority priority)
 
 static int compareMemberAmount(PQElementPriority priority1, PQElementPriority priority2)
 {
-	return amountCompare((int *)priority1, (int *)priority2);
+	return amountCompare(priority1, priority2);
 } 
 
 
@@ -512,66 +512,65 @@ char* emGetNextEvent(EventManager em)
 	return pqGetNext(em->events);
 }
 
-void printMembersPerEvent(Event event, const char* file_name)//print members per event
+static void printMembersPerEvent(Event event, FILE* fp)//print members per event
 {
 	PQ_FOREACH(Member, current, getMembersPerEvent(event))
 	{
-		fprintf(file_name,",%s ", current);//how to put only one comma at the end
+		fprintf(fp,",%s ",getMemberName(current));
 
 	}
 }
 
-void printCurrentEvent(Event event, const char* file_name)
+static void printCurrentEvent(Event event, FILE* fp)
 {
-	fprintf(file_name,"%s ", getEventName(event));
-	fprintf(file_name, ",%d.%d.%d, ", getEventdate(event));
-	printMembersPerEvent(event, file_name);
+	fprintf(fp,"%s ", getEventName(event));
+	Date date = getEventdate(event);
+	int* day = malloc(sizeof(int));
+	int* month = malloc(sizeof(int));
+	int* year = malloc(sizeof(int));
+	dateGet(date,day,month,year);
+	fprintf(fp, ",%d.%d.%d ",*day, *month,*year);
+	free(day);
+	free(month);
+	free(year);
+	printMembersPerEvent(event, fp);
 }
 
 
 void emPrintAllEvents(EventManager em, const char* file_name)
 {
-	FILE* file_name = fopen(file_name, "a");
-	if(!file_name)//filename or file_name?, create file already?
+	FILE* fp = fopen(file_name, "a");
+	if(!fp)
 	{
 		return;
 	}
-	PQ_FOREACH(Event, current, em->events)//can we create loop in loop?
+	PQ_FOREACH(Event, current, em->events)
 	{
-		printCurrentEvent(current, file_name);
-		fprintf(file_name, "\n");// is 'a' needed again?
+		printCurrentEvent(current, fp);
+		fprintf(fp, "\n");// is 'a' needed again?
 	}
-	fclose(file_name);	
+	fclose(fp);	
 }
 
-void printCurrentMember(Member member,const char* file_name)
+static void printCurrentMember(Member member, FILE* fp)
 {
-	fprintf(file_name, "%s, ", getEventName(event));// is a or w is needed?
-	fprintf(file_name,"%d, ", getMemberName());
-	printMembersPerEvent(event);//???
+	fprintf(fp, "%s", getMemberName(member));
+	fprintf(fp,",%d ", *(getMemberAmount(member)));
 }
 
-
-void emPrintAllResponsibleMembers(EventManager em, const char* file_name)//only a or w?
+void emPrintAllResponsibleMembers(EventManager em, const char* file_name)
 {
-	FILE* file_name = fopen(file_name, "a");//filename or file_name?, create file already?
-	if(!file_name)
+	FILE* fp = fopen(file_name, "a");
+	if(!fp)
 	{
 		return;
 	}
-	PQ_FOREACH(Member, current, em->members)//can we create loop in loop?
+	PQ_FOREACH(Member, current, em->members)
 	{
-		if(*(getMemberAmount(current)) > 0) //
-		{
-		if(memberIdCompare((getMemberId(current)), getMemberId(pqGetNext(em->members))))
-		{
-			printf("la");//write printCurrentMember
-		}
-		printCurrentMember(current, file_name);//how to know what the events' size of each member
-		fprintf(file_name, "\n");// is 'a' needed again?
-		}
+		printCurrentMember(current, fp);
+		fprintf(fp, "\n");// is 'a' needed again?
 	}
-	fclose(file_name);	
+	fclose(fp);	
 }
 
 
@@ -583,186 +582,3 @@ void emPrintAllResponsibleMembers(EventManager em, const char* file_name)//only 
 
 
 
-
-
-// if(days == VALID_DATE)
-	// {
-	// current_date = em->first_date;
-		//emAddEventByDate(em, event_name, em->first_date, event_id);
-	//}
-	//Date current_date = em->first_date;
-
-
-
-// static EventManagerResult checkErorrInAddEvent(EventManager em, char* event_name, Date date, int event_id)
-// {
-// 	if((em == NULL) || (event_name == NULL) || (date == NULL))
-// 	{
-// 		return EM_NULL_ARGUMENT;
-// 	}
-// 	if(dateCompare(date, em->first_date) < VALID_DATE)	
-// 	{
-// 		return EM_INVALID_DATE;
-// 	}
-// 	if(event_id < VALID_ID)
-// 	{
-// 		return EM_INVALID_EVENT_ID;
-// 	}
-// 	if(eventNameinSameDate(em, event_name, date))
-// 	{
-// 		return EM_EVENT_ID_ALREADY_EXISTS;
-// 	}
-// 	if(FindEventFromId(em, event_id))
-// 	{
-// 		return EM_EVENT_ID_ALREADY_EXISTS;
-// 	}
-// }
-
-//PriorityQueue events_list = pqCreate(Event->copyElement, Event->freeElement, Event->equalElements,
-//                                                Event->copyPriority, Event->freePriority, Event->comparePriorities)
-
-//PQElement copy_element(Event event);
-//{
-//	return dateCopy();
-//}
-
-
-
-//Allocates a new event managers
-// EventManager createEventManager(Date date)
-// {
-// 	//return pqCreate(em copy, )
-// 	 return calCreate(hourEventCopy, hourEventDestroy);
-// }
-// EventManager createEventManager(Date date)
-// {
-// 	EventManager em = malloc(sizeof(*em));
-// 	if(em == NULL) 
-//     {
-// 		return NULL;
-// 	}
-// 	em->date = date;
-// 	em->next = NULL;
-// 	return em;
-// }
-
-
-
-
-
-//Deallocates an existing event manager
-// void destroyEventManager(EventManager em)
-// {
-//     if(em == NULL) 
-//     {
-// 		return;
-// 	}
-// 	EventManager em_to_delete = em;
-// 	em = em->next;
-// 	free(em_to_delete);    
-// }
-
-// //Compares ID of two events
-// static bool eventIdCompare(const int event_ID_1, const int event_ID_2)
-// {
-// 	if((event_ID_1) == (event_ID_2))
-// 	{
-// 		return true;
-// 	}
-// 	return false;
-// }
-
-//Find event with the same name
-// static bool eventFind_ID(const int event_id_1, EventManager em)///CHANGE TO INT!!!!!!!!
-// {
-// 	for (Event ptr = (em->event); ptr != NULL; ptr = ptr->next)
-// 	{
-// 		int new_id = ptr->event_id;
-// 		if (eventIdCompare(event_id_1,new_id))
-// 		{
-// 			return true;
-// 		}
-// 	}
-// 		return false;
-// }
-
-//Compares names of two events
-// static bool eventNameCompare(const char* event_name_1, const char* event_name_2)
-// {
-// 	if(strcmp(event_name_1, event_name_2) == EQUAL)
-// 	{
-// 		return true;
-// 	}
-// 	return false;
-// }
-
-
-//Find event with the same name
-// static bool eventFindName(const char* event_name_1, EventManager em)///
-// {
-// 	for (Event ptr = (em->event); ptr != NULL; ptr = ptr->next)
-// 	{
-// 		char* new_name = ptr->event_name;
-// 		if (eventNameCompare(event_name_1,new_name))
-// 		{
-// 			return true;
-// 		}
-// 	}
-// 		return false;
-// }
-
-
-// //Adds new event to existing date
-// EventManagerResult emAddEventByDate(EventManager em, char* event_name, Date date, int event_id)
-// {
-// 	if((em == NULL) || (event_name == NULL) || (date == NULL))
-// 	{
-// 		return EM_NULL_ARGUMENT;
-// 	}
-// 	Date current_date = em->date;
-// 	if (dateCompare(date, current_date) < VALID_DATE)
-// 	{
-// 		return EM_INVALID_DATE;
-// 	}
-// 	if (event_id < VALID_ID)
-// 	{
-// 		return EM_INVALID_EVENT_ID;
-// 	}
-// 	if(eventFindName(event_name,em))
-// 	{
-// 		return EM_EVENT_ALREADY_EXISTS;
-// 	}
-// 	if(eventFind_ID(event_id, em))
-// 	{
-// 		return EM_EVENT_ID_ALREADY_EXISTS;
-// 	}
-// 	///OTHER CASES
-// 	////
-// 	///AT THE END SUCESS
-// 	return EM_SUCCESS;
-// }
-
-// static copy_element(PQElement event)
-// {
-// 	Event new_event = eventCopy((Event)event);
-// 	return new_event;
-
-// }
-// static bool findEventIdInEm(EventManager em, int id)
-// {
-// 	//for (PQElementPriority ptr = em->events; ptr != NULL; ptr = ptr->next) 
-// 	//{
-// 		PQ_FOREACH(PQElement, iterator, em->events)
-// 		{
-// 			int id_iterator = get
-// 		}
-// 		if(compareEventsId(ptr->event_id, id))
-// 		{
-// 			return true;
-// 		}
-// 		else
-// 		{
-// 			return false	
-// 		}
-// 	//}
-// }
