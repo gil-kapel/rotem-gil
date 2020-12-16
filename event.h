@@ -2,9 +2,11 @@
 #define EVENT_H_
 #include "date.h"
 #include "priority_queue.h"
+#include "member.h"
 #include <stdbool.h>
 
 typedef struct Event_t *Event;
+
 
 Event eventCreate(char* name, int id, Date date);//, PriorityQueue members_per_event);// change in em
 
@@ -19,6 +21,8 @@ bool eventCompare(Event event1, Event event2);
 int getEventId(Event event);
 
 char* getEventName(Event event);
+
+PriorityQueue getMembersPerEvent(Event event);
 
 Date getEventdate(Event event);
 
