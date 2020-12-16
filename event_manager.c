@@ -4,8 +4,8 @@
 #include <string.h>
 #include "event_manager.h"
 #include "priority_queue.h"
-#include "event.h"
 #include "date.h"
+#include "event.h"
 #include "member.h"
 #define VALID_DATE 0
 #define VALID_ID 0
@@ -61,7 +61,7 @@ static void freeDatePriority(PQElementPriority priority)
 
 static int compareDatePriority(PQElementPriority priority1, PQElementPriority priority2)
 {
-	return dateCompare(priority1, priority2);
+	return dateCompare((void*)priority1,(void*)priority2);
 } 
 
 //members functions
@@ -78,7 +78,7 @@ static void freeMemberInem(PQElement elem)
 
 static bool equalMembersInEm(PQElement elem1,PQElement elem2)
 {
-	return memberCompare(elem1,elem2);
+	return memberCompare((void*)elem1, (void*)elem2);
 }
 
 static PQElementPriority copyMemberAmount(PQElementPriority priority)
@@ -93,7 +93,7 @@ static void freeMemberAmount(PQElementPriority priority)
 
 static int compareMemberAmount(PQElementPriority priority1, PQElementPriority priority2)
 {
-	return amountCompare(priority1, priority2);
+	return amountCompare((int *)priority1, (int *)priority2);
 } 
 
 
@@ -322,7 +322,7 @@ EventManagerResult emChangeEventDate(EventManager em, int event_id, Date new_dat
 
 static bool findMemberById(EventManager em, int member_id)
 {
-		PQ_FOREACH(Member, current, em->members)
+	PQ_FOREACH(Member, current, em->members)
 	if ((*getMemberId(current)) == member_id)
 	{
 		return true;
@@ -356,15 +356,21 @@ EventManagerResult emAddMember(EventManager em, char* member_name, int member_id
 	{
 		return EM_MEMBER_ID_ALREADY_EXISTS;
 	}
-	Member new_member = memberCreate(member_name, member_id);
+	int* id = malloc(sizeof(int));
+	*id = member_id;
+	Member new_member = memberCreate(member_name, id);
 	if(!new_member)
 	{
+		free(id);
 		destroyEventManager(em);//is it really necessery
 		return EM_OUT_OF_MEMORY;
 	}
-	PriorityQueueResult res = pqInsert(em->members, new_member, member_id);// what happened when events is NULL
+	int* p_member_id = malloc(sizeof(int));
+	*p_member_id = member_id;
+	PriorityQueueResult res = pqInsert(em->members, new_member, p_member_id);// what happened when events is NULL
 	if(res == PQ_OUT_OF_MEMORY)
 	{
+		free(p_member_id);
 		destroyEventManager(em);
 		return EM_OUT_OF_MEMORY;
 	}
@@ -375,15 +381,16 @@ EventManagerResult emAddMember(EventManager em, char* member_name, int member_id
 static bool eventWithSameMember(EventManager em, int member_id, int event_id)
 {
 	Event chosen_event = getEventFromId(em, event_id);
-	PQ_FOREACH(Member, iterator, em->events->chosen_event->members_per_event)//can we point on a queue and than on an elem inside the queue
+	PQ_FOREACH(Member, iterator, getMembersPerEvent(chosen_event))//can we point on a queue and than on an elem inside the queue
 	{
-		if ((getEventId(iterator)) == member_id)
+		if (*(getMemberId(iterator)) == member_id)
 		{
 			return true;
 		}
 	}
 	return false;
 }
+
 
 //function that check if exist 2 loops
 EventManagerResult emAddMemberToEvent(EventManager em, int member_id, int event_id)
@@ -409,9 +416,13 @@ EventManagerResult emAddMemberToEvent(EventManager em, int member_id, int event_
 		return EM_EVENT_AND_MEMBER_ALREADY_LINKED;
 	}
 	Member new_member = getMemberById(em, member_id);
-	PriorityQueueResult res = pqInsert(em->events->members_per_event, new_member, member_id);//is it ok to put em->events->otherqueue?
+	Event current_event = getEventFromId(em, event_id);
+	int* m_id = malloc(sizeof(int));
+	*m_id = member_id;
+	PriorityQueueResult res = pqInsert(getMembersPerEvent(current_event), new_member, m_id);//is it ok to put em->events->otherqueue?
 	if(res == PQ_OUT_OF_MEMORY)
 	{
+		freeMemberId(m_id);
 		destroyEventManager(em);
 		return EM_OUT_OF_MEMORY;
 	}
@@ -442,7 +453,8 @@ EventManagerResult emRemoveMemberFromEvent(EventManager em, int member_id, int e
 		return EM_EVENT_AND_MEMBER_NOT_LINKED;
 	}
 	Member member_to_delete = getMemberById(em, member_id);
-	PriorityQueueResult res = pqRemoveElement(em->events->members_per_event, member_to_delete);
+	Event to_remove = getEventFromId(em, event_id);
+	PriorityQueueResult res = pqRemoveElement(getMembersPerEvent(to_remove), member_to_delete);
 	if (res == PQ_OUT_OF_MEMORY)
 	{
 		destroyEventManager(em);
@@ -502,17 +514,17 @@ char* emGetNextEvent(EventManager em)
 
 void printMembersPerEvent(Event event, const char* file_name)//print members per event
 {
-	PQ_FOREACH(Member, current, event->members_per_event)
+	PQ_FOREACH(Member, current, getMembersPerEvent(event))
 	{
-		fprintf(file_name,"%s, ", current);//how to put only one comma at the end
+		fprintf(file_name,",%s ", current);//how to put only one comma at the end
 
 	}
 }
 
 void printCurrentEvent(Event event, const char* file_name)
 {
-	fprintf(file_name,"%s, ", event->event_name);
-	fprintf(file_name, "%d.%d.%d, ", event->date->day, event->date->month, event->date->year);
+	fprintf(file_name,"%s ", getEventName(event));
+	fprintf(file_name, ",%d.%d.%d, ", getEventdate(event));
 	printMembersPerEvent(event, file_name);
 }
 
@@ -532,10 +544,10 @@ void emPrintAllEvents(EventManager em, const char* file_name)
 	fclose(file_name);	
 }
 
-void printCurrentMember()
+void printCurrentMember(Member member,const char* file_name)
 {
-	fprintf(file_name, "%s, ", member->member_name);// is a or w is needed?
-	fprintf(file_name,"%d, ", member->member_name);
+	fprintf(file_name, "%s, ", getEventName(event));// is a or w is needed?
+	fprintf(file_name,"%d, ", getMemberName());
 	printMembersPerEvent(event);//???
 }
 
@@ -549,11 +561,11 @@ void emPrintAllResponsibleMembers(EventManager em, const char* file_name)//only 
 	}
 	PQ_FOREACH(Member, current, em->members)//can we create loop in loop?
 	{
-		if(*(current->amount) > 0) //
+		if(*(getMemberAmount(current)) > 0) //
 		{
-		if(memberIdCompare(*(current->member_id), *getMemberId(pqGetNext(em->members))))
+		if(memberIdCompare((getMemberId(current)), getMemberId(pqGetNext(em->members))))
 		{
-			//write printCurrentMember
+			printf("la");//write printCurrentMember
 		}
 		printCurrentMember(current, file_name);//how to know what the events' size of each member
 		fprintf(file_name, "\n");// is 'a' needed again?
