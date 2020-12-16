@@ -1,24 +1,24 @@
 #include "event.h"
+#include "date.h"
+#include "member.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "event_manager.h"
 #include "priority_queue.h"
-#include "date.h"
-#include "member.h"
 
 struct Event_t
 {
     char* event_name;
 	int event_id;
     Date date;
-	PriorityQueue members_per_event;//?
+	PriorityQueue members_per_event;
 };
 
 static PQElement copy_member(PQElement elem)
 {
-	return memberCopy(elem);
+	return memberCopy((Member)elem);
 }
 
 static void free_member(PQElement elem)
@@ -64,7 +64,6 @@ Event eventCreate(char* name, int id, Date date)//,  members_per_event)// change
     {
         return NULL;
     }
-    //event->event_name = malloc(strlen(name)+1);
     event->event_name = stringCopy(name);
     if (event->event_name == NULL) 
     {
@@ -72,7 +71,7 @@ Event eventCreate(char* name, int id, Date date)//,  members_per_event)// change
         return NULL;
     }
     event->event_id = id;
-    PriorityQueue members_per_event = pqCreate(copy_member, free_member, equal_member, copy_member_id, free_member_id, compare_member_id);
+    event->members_per_event = pqCreate(copy_member, free_member, equal_member, copy_member_id, free_member_id, compare_member_id);
     event->date = date;
     //event->members_per_event = pqCopy(members_per_event);
     return event;
@@ -126,6 +125,11 @@ char* getEventName(Event event)//
     return event->event_name;
 }
 
+PriorityQueue getMembersPerEvent(Event event)
+{
+    return event->members_per_event;
+}
+
 Date getEventdate(Event event)
 {
     return event->date;
@@ -136,38 +140,3 @@ char* getNameFromEvent(Event event)
     return stringCopy(event->event_name);
 }
 
-// bool compareEventsId(Event event1, Event event2)
-// {
-//     if ((event1->event_id) == (event2->event_id))
-//     {
-//         return true;
-//     }
-//     return false;
-// }
-
-
-
-
-// bool eventGet(Event event, char** name, int* id, Date date)
-// {
-//     if((name == NULL) || (id == NULL) || (date == NULL))
-//     {
-//         return false;
-//     }
-//     *name = event->event_name; 
-//     *id = event->event_id; 
-//     dateGet(Date date, int* day, int* month, int* year)
-//     *date = event->date;
-//     // date->day = event->date->day;
-//     // (date->month) = event->date->month;
-//     // (date->year) = event->date->year;
-
-//     return true;
-// }
-
-// copy_element(PQElement event)
-// {
-// 	Event new_event = eventCopy((Event)event);
-// 	return new_event;
-
-// }
