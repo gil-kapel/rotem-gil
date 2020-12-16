@@ -146,6 +146,7 @@ PriorityQueueResult pqClear(PriorityQueue queue)
         Node toDelete = position;
         position = position->next;
         toDelete->next  = NULL;
+        queue->head = position;
         free(toDelete);
     }
     return PQ_SUCCESS; 
