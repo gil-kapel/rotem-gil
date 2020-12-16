@@ -229,18 +229,16 @@ PriorityQueueResult pqInsert(PriorityQueue queue, PQElement element, PQElementPr
     {
         return pqInsertNodeToHead(queue,element,priority,NULL); //add the new node to the head of the queue
     }
-    if(queue->comparePriorities(priority, queue->head->priority) >= EQUAL)
+    if(queue->comparePriorities(priority, queue->head->priority) > EQUAL)
     {
-        //*insert the new node to the top
-        return pqInsertNodeToHead(queue,element,priority,queue->head);
+        return pqInsertNodeToHead(queue,element,priority,queue->head); //insert the new node to the top
     }
     Node position = queue->head;
     while(position->next)
     {
-        if(queue->comparePriorities(priority, position->next->priority) >= EQUAL)
+        if(queue->comparePriorities(priority, position->next->priority) > EQUAL)
         {
-            //*insert the new node before the position founded */
-            return pqInsertNodeToMiddle(queue,element,priority,position);
+            return pqInsertNodeToMiddle(queue,element,priority,position);//insert the new node before position pointer
         }
         position = position->next;
     }
