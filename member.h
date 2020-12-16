@@ -5,7 +5,7 @@
 
 typedef struct Member_t *Member;
 
-Member memberCreate(char* name, int id);//, int amount);//,PriorityQueue members_per_event);
+Member memberCreate(char* name, int* id);//, int* amount);//, int amount);//,PriorityQueue members_per_event);
 
 Member memberCopy(Member member);
 
@@ -30,11 +30,11 @@ int* copyAmount(int* amount);
 
 void amountDestroy(int* amount);
 
-int amountCompare(int* amount1, int* amount2);
+int amountCompare(Member member1, Member member2);
 
 int memberIdCompare(int* member_id1, int* member_id2);
 
-
+int* getMemberAmount(Member member);
 
 #endif //MEMBER_H_
 
