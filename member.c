@@ -25,7 +25,7 @@ static char* stringCopy(char* new_str)
         return NULL;
     }
     char* copy_str = malloc(strlen(new_str)+1);
-    return copy_str ? strcpy(copy_str, new_str) : NULL;
+    return (copy_str == NULL) ? strcpy(copy_str, new_str) : NULL;
 }
 
 Member memberCreate(char* name, int* id)//, int* amount)//, int amount)//,PriorityQueue members_per_event);
@@ -38,15 +38,13 @@ Member memberCreate(char* name, int* id)//, int* amount)//, int amount)//,Priori
 	member->member_name = stringCopy(name);
     if (member->member_name == NULL) 
     {
+        memberDestroy(member);
         return NULL;
-    }
-    if(member->member_name == NULL)
-    {
-		memberDestroy(member);
     }
     int* member_id = malloc(sizeof(int));
     if (member_id == NULL)
     {
+        memberDestroy(member);
         return NULL;
     }
     *(member->member_id) = *id;
@@ -77,7 +75,9 @@ void memberDestroy(Member member)
     {
         return;
     }
-    free(member->member_name);//
+    free(member->amount);
+    free(member->member_id);
+    free(member->member_name);
     free(member);
 }
 
@@ -124,6 +124,7 @@ int* copyMemberId(int* member_id)
     int* new_member_id = malloc(sizeof(int));   
     if(new_member_id == NULL)
     {
+        free(new_member_id);
         return NULL;
     }
     *new_member_id = *member_id;
@@ -169,6 +170,7 @@ int* copyAmount(int* amount)
     int* new_amount = malloc(sizeof(int));   
     if(new_amount == NULL)
     {
+        free(new_amount);
         return NULL;
     }
     *new_amount = *amount;
