@@ -576,12 +576,3 @@ void emPrintAllResponsibleMembers(EventManager em, const char* file_name)
 	}
 	fclose(fp);	
 }
-
-
-
-
-
-
-
-
-
