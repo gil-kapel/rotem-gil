@@ -412,21 +412,18 @@ EventManagerResult emAddMemberToEvent(EventManager em, int member_id, int event_
 	}
 	Member new_member = getMemberById(em, member_id);
 	Event current_event = getEventFromId(em, event_id);
-	int* m_id = malloc(sizeof(int));
-	*m_id = member_id;
+	int* m_id = &member_id;
 	PriorityQueueResult res = pqInsert(getMembersPerEvent(current_event), new_member, m_id);//is it ok to put em->events->otherqueue?
 	if(res == PQ_OUT_OF_MEMORY)
 	{
-		freeMemberId(m_id);
 		destroyEventManager(em);
 		return EM_OUT_OF_MEMORY;
 	}
 	int* amount = getMemberAmount(new_member);
-	int* newAmount = amount + 1;
-	PriorityQueueResult res2 = pqChangePriority(em->members, new_member, amount, newAmount);
+	int newAmount = *amount;
+	PriorityQueueResult res2 = pqChangePriority(em->members, new_member, amount, &newAmount);
 	if(res2 != PQ_SUCCESS)
 	{
-		freeMemberId(m_id);
 		destroyEventManager(em);
 		return EM_OUT_OF_MEMORY;
 	}
