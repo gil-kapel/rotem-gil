@@ -1,0 +1,17 @@
+CC = gcc
+OBJS = queue_priority.o tests_example_pq.o
+EXEC = queue_priority
+DEBUG_FLAG = *empty unless we want to debug
+C_FLAG = -std=c99 -Wall -Werror $(DEBUG_FLAG)
+
+$(EXEC): $(OBJS)
+	$(CC) $(DEBUG_FLAG) $(OBJS) -o $@
+	
+priority_queue.o: priority_queue.c priority_queue.h
+	$(CC) $(DEBUG_FLAG) $(C_FLAG) $*.c
+	
+pq_tests.o: pq_tests.c test_utilities.h priority_queue.h
+	$(CC) $(DEBUG_FLAG) $(C_FLAG) $*.c
+
+clean:
+	rm -f $(OBJS) $(EXEC)
