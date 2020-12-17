@@ -20,19 +20,6 @@ struct EventManager_t
 	Date first_date;//NULL?
 };
 
-// typedef struct priorityById_t
-// {
-// 	int id;
-// }PriorityID;
-
-
-// typedef struct priorityByQ_t
-// {
-// 	Date date;
-// }PriorityDate;
-
-//events functions
-
 static PQElement copyEventInEm(PQElement elem)
 {
 	return eventCopy(elem);
@@ -111,7 +98,11 @@ EventManager createEventManager(Date date)
 		return NULL;
 	}
 	em->members = pqCreate(copymemberInEm,freeMemberInem,equalMembersInEm,copyMemberAmount,freeMemberAmount,compareMemberAmount);
-	em->first_date = date;
+	if(!(em->members))
+	{
+		return NULL;
+	}
+	em->first_date = dateCopy(date);
 	return em;
 }
 
@@ -124,7 +115,7 @@ void destroyEventManager(EventManager em)
 		return;
 	}
 	pqDestroy(em->events);
-	//
+	pqDestroy(em->members);
 	dateDestroy(em->first_date);
 	free(em);
 }
@@ -139,7 +130,7 @@ void destroyEventManager(EventManager em)
 // 	return NULL;
 // }
 
-static bool FindEventFromId(EventManager em, int id)
+static bool isEventFromId(EventManager em, int id)
 {
 	PQ_FOREACH(Event, current, em->events)
 	if ((getEventId(current)) == id)
@@ -166,14 +157,17 @@ static bool FindEventFromId(EventManager em, int id)
 
 static bool eventNameinSameDate(EventManager em, char* event_name, Date date)
 {
+	Date date_to_insert =  dateCopy(date);
 	PQ_FOREACH(Event, current, em->events)
-	if (!dateCompare(date,getEventdate(current))) 
+	if (!dateCompare(date_to_insert ,getEventdate(current))) 
 	{
-		if(strcmp(event_name, getEventName(current)))
+		if(!strcmp(event_name, getEventName(current)))
 		{
+			free(date_to_insert);
 			return true;
 		}
 	}
+	free(date_to_insert);
 	return false;
 }
 
@@ -196,7 +190,7 @@ EventManagerResult emAddEventByDate(EventManager em, char* event_name, Date date
 	{
 		return EM_EVENT_ALREADY_EXISTS;
 	}
-	if(FindEventFromId(em, event_id))
+	if(isEventFromId(em, event_id))
 	{
 		return EM_EVENT_ID_ALREADY_EXISTS;
 	}
@@ -215,15 +209,15 @@ EventManagerResult emAddEventByDate(EventManager em, char* event_name, Date date
 	return EM_SUCCESS;
 }
 
-static Date tickDateByDays(EventManager em, int days)
+static Date tickDateByDays(Date date, int days)
 {
-	Date chosen_date = dateCopy(em->first_date);
+	//Date chosen_date = dateCopy(em->first_date);
 	while (days > VALID_DATE)
 	{
-		dateTick(chosen_date);
+		dateTick(date);
 		days = days - DAY;
 	}
-	return chosen_date;
+	return date;
 }
 
 
@@ -241,8 +235,9 @@ EventManagerResult emAddEventByDiff(EventManager em, char* event_name, int days,
 	{
 		return EM_INVALID_EVENT_ID;
 	}
-	Date date = tickDateByDays(em, days);
-	EventManagerResult res = emAddEventByDate(em, event_name, date, event_id);
+	Date date = dateCopy(em->first_date);
+	Date new_date = tickDateByDays(date, days);
+	EventManagerResult res = emAddEventByDate(em, event_name, new_date, event_id);
 	free(date);
 	return res;
 }
@@ -299,7 +294,7 @@ EventManagerResult emChangeEventDate(EventManager em, int event_id, Date new_dat
 	{
 		return EM_INVALID_EVENT_ID;
 	}
-	if(!FindEventFromId(em, event_id))
+	if(!isEventFromId(em, event_id))
 	{
 		return EM_EVENT_ID_NOT_EXISTS;
 	}
@@ -461,7 +456,6 @@ EventManagerResult emRemoveMemberFromEvent(EventManager em, int member_id, int e
 		return EM_OUT_OF_MEMORY;
 	}
 	return EM_SUCCESS;
-
 }
 
 static PriorityQueueResult remove_prev_events(EventManager em, Date date)
@@ -490,7 +484,7 @@ EventManagerResult emTick(EventManager em, int days)
 	{
 		return EM_INVALID_DATE;
 	}
-	Date new_date = tickDateByDays(em, days);
+	Date new_date = tickDateByDays(em->first_date, days);
 	Date to_delete = em->first_date;
 	em->first_date = new_date;
 	free(to_delete);
@@ -509,7 +503,8 @@ char* emGetNextEvent(EventManager em)
 	{
 		return NULL;
 	}
-	return pqGetNext(em->events);
+	Event event = pqGetFirst(em->events);
+	return getEventName(event);
 }
 
 static void printMembersPerEvent(Event event, FILE* fp)//print members per event
@@ -572,7 +567,6 @@ void emPrintAllResponsibleMembers(EventManager em, const char* file_name)
 	}
 	fclose(fp);	
 }
-
 
 
 
