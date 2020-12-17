@@ -420,7 +420,7 @@ EventManagerResult emAddMemberToEvent(EventManager em, int member_id, int event_
 		return EM_OUT_OF_MEMORY;
 	}
 	int* amount = getMemberAmount(new_member);
-	int newAmount = *amount;
+	int newAmount = *amount + 1;
 	PriorityQueueResult res2 = pqChangePriority(em->members, new_member, amount, &newAmount);
 	if(res2 != PQ_SUCCESS)
 	{
