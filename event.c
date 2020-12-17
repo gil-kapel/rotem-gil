@@ -72,7 +72,7 @@ Event eventCreate(char* name, int id, Date date)//,  members_per_event)// change
     }
     event->event_id = id;
     event->members_per_event = pqCreate(copy_member, free_member, equal_member, copy_member_id, free_member_id, compare_member_id);
-    event->date = date;
+    event->date = dateCopy(date);
     //event->members_per_event = pqCopy(members_per_event);
     return event;
 }
@@ -94,6 +94,7 @@ void eventDestroy(Event event)
     {
         return;
     }
+    free(event->date);
     free(event->event_name);//
     free(event->members_per_event);//what else?
     free(event);
@@ -105,7 +106,7 @@ bool eventCompare(Event event1, Event event2)
     {
         return NULL;
     }
-    int name_res = strcmp(event1->event_name,event2->event_name);
+    int name_res = strcmp(event1->event_name, event2->event_name);
     int id_res = ((event1->event_id) - (event2->event_id));
     int date_res = dateCompare(event1->date, event2->date);
     if((!name_res) && (!id_res) && (!date_res))
@@ -120,7 +121,7 @@ int getEventId(Event event)
     return event->event_id;
 }
 
-char* getEventName(Event event)//
+char* getEventName(Event event)
 {
     return event->event_name;
 }
@@ -137,6 +138,6 @@ Date getEventdate(Event event)
 
 char* getNameFromEvent(Event event)
 {
-    return stringCopy(event->event_name);
+    return event->event_name;
 }
 
