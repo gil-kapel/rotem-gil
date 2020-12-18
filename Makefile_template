@@ -1,3 +1,89 @@
+
+CC = gcc
+C_FLAG = -std=c99 -Wall -pedantic-errors -Werror -DNDEBUG
+EM_EXEC = event_manager
+EM_OBJS = event_manager.o date.o event.o member.o event_manager_tests.o 
+
+$(EXEC): $(OBJS) 
+	$(CC) $(CFLAGS) $(OBJS) -o $@ -L. lpriority_queue.a 
+
+event_manager.o: event_manager.c event_manager.h date.h priority_queue.h event.h member.h
+	$(CC) -c $(C_FLAG) $*.c
+
+event_manager.o: event_manager.c event_manager.h date.h priority_queue.h event.h member.h
+	$(CC) -c $(C_FLAG) $*.c
+
+tests/event_manager_tests.o: tests/event_manager_tests.c tests/event_manager_tests.h event_manager.h tests/test_utilities.h
+	$(CC) $(CFLAGS) -c tests/$*.c
+
+date.o: date.c date.h
+	$(CC) -c $(C_FLAG) $*.c
+
+event.o: event.c event.h date.h priority_queue.h member.h event_manager.h
+	$(CC) -c $(C_FLAG) $*.c
+
+member.o: member.c member.h event_manager.h date.h priority_queue.h event.h
+	$(CC) -c $(C_FLAG) $*.c
+	
+clean:
+	rm -f $(OBJS) $(EXEC) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////old
+
+
+
+
+
+
+
+
 CC = gcc
 C_FLAG = -std=c99 -Wall -pedantic-errors -Werror -DNDEBUG
 EM_EXEC = event_manager
