@@ -1,0 +1,58 @@
+CC = gcc
+C_FLAG = -std=c99 -Wall -pedantic-errors -Werror -DNDEBUG
+PQ_EXEC = priority_queue
+PQ_OBJS = priority_queue.o pq_tests.o
+EM_EXEC = event_manager
+EM_OBJS = event_manager.o date.o event.o member.o event_manager_tests.o 
+
+$(PQ_EXEC): $(PQ_OBJS)
+	$(CC) $(C_FLAG) $(PQ_OBJS) -o $@
+
+$(EM_EXEC): $(EM_OBJS) 
+	$(CC) $(C_FLAG) $(EM_OBJS) -o $@ -L. -lpriority_queue
+
+priority_queue.o: priority_queue.c priority_queue.h
+	$(CC) -c $(C_FLAG) $*.c
+
+pq_tests.o: tests/pq_tests.c priority_queue.h
+	$(CC) -c $(C_FLAG)  tests/$*.c
+
+event_manager.o: event_manager.c event_manager.h date.h priority_queue.h event.h member.h
+	$(CC) -c $(C_FLAG) $*.c
+
+date.o: date.c date.h
+	$(CC) -c $(C_FLAG) $*.c
+
+event.o: event.c event.h date.h priority_queue.h member.h event_manager.h
+	$(CC) -c $(C_FLAG) $*.c
+
+member.o: member.c member.h event_manager.h date.h priority_queue.h event.h
+	$(CC) -c $(C_FLAG) $*.c
+
+event_manager_tests.o: tests/event_manager_tests.c event_manager.h
+	$(CC) -c $(C_FLAG) tests/$*.c
+
+clean:
+	rm -f $(PQ_OBJS) $(EM_OBJS) $(PQ_XEC) $(EM_XEC)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
