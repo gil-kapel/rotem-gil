@@ -21,7 +21,7 @@ Date dateCreate(int day, int month, int year);
 /**
 * dateDestroy: Deallocates an existing Date.
 *
-* @param date - Target date to be deallocated. If priority queue is NULL nothing will be done
+* @param date - Target date to be deallocated. If date is NULL nothing will be done
 */
 void dateDestroy(Date date);
 
