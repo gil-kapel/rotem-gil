@@ -448,7 +448,7 @@ EventManagerResult emRemoveMemberFromEvent(EventManager em, int member_id, int e
 	{
 		return EM_INVALID_MEMBER_ID;
 	}	
-	if(isEventFromId(em, event_id))
+	if(!isEventFromId(em, event_id))
 	{
 		return EM_INVALID_EVENT_ID;
 	}
