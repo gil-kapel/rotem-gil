@@ -9,53 +9,48 @@
 #include "event.h"
 #define INIT_AMOUNT 0
 
-
 struct Member_t
 {
 	char* member_name;
 	int* member_id;
-    //int id;
 	int* amount;
 };
 
 static char* stringCopy(char* new_str)
 {
-    if(!new_str)
+    if(new_str == NULL)
     {
         return NULL;
     }
-    char* copy_str = malloc(strlen(new_str)+1);
-    return (copy_str == NULL) ? strcpy(copy_str, new_str) : NULL;
+    char* copy_str = malloc(strlen(new_str) + 1);
+    return (copy_str != NULL) ? strcpy(copy_str, new_str) : NULL;
 }
 
-Member memberCreate(char* name, int* id)//, int* amount)//, int amount)//,PriorityQueue members_per_event);
+Member memberCreate(char* name, int* id)
 {
+    if(name == NULL || id == NULL)
+    {
+        return NULL;
+    }
     Member member = malloc(sizeof(*member));
     if (member == NULL) 
     {
         return NULL;
     }
 	member->member_name = stringCopy(name);
-    if (member->member_name == NULL) 
+    if(member->member_name == NULL)
     {
-        memberDestroy(member);
+		memberDestroy(member);
         return NULL;
     }
-    int* member_id = malloc(sizeof(int));
-    if (member_id == NULL)
-    {
-        memberDestroy(member);
-        return NULL;
-    }
-    *(member->member_id) = *id;
-    free(id);
-    int* amount = malloc(sizeof(int));
-    if (amount == NULL)
+    member->member_id = copyMemberId(id);
+    int* init_amount = malloc(sizeof(int*));
+    if(init_amount == NULL)
     {
         return NULL;
     }
-    *(member->amount) = INIT_AMOUNT;
-    //member->amount = amount;
+    *init_amount = 0;
+    member->amount = copyAmount(init_amount);
 	return member;
 }
 
@@ -65,20 +60,22 @@ Member memberCopy(Member member)
     {
         return NULL;
     }
-    return memberCreate(member->member_name, member->member_id);//, member->amount);
+    Member member_copy = memberCreate(member->member_name, member->member_id);
+    member_copy->amount = copyAmount(member->amount);
+    return member_copy;
 }
 
 //Deallocates an existing Date
 void memberDestroy(Member member)
 {
-    if(member == NULL)
+    if(member)
     {
-        return;
+        free(member->member_id);
+        free(member->amount);
+        free(member->member_name);
+        free(member);
     }
-    free(member->amount);
-    free(member->member_id);
-    free(member->member_name);
-    free(member);
+
 }
 
 bool memberCompare(Member member1, Member member2)
@@ -88,7 +85,7 @@ bool memberCompare(Member member1, Member member2)
         return NULL;
     }
     int name_res = strcmp(member1->member_name,member2->member_name);
-    int id_res = ((member1->member_id) - (member2->member_id));
+    int id_res = (*(member1->member_id) - *(member2->member_id));
     //int amount_res = ((member1->amount) - (member2->amount));
     if((!name_res) && (!id_res))// && (!amount_res))
     {
@@ -151,7 +148,6 @@ int memberIdCompare(int* member_id1, int* member_id2)
     return (first_id - second_id);
 }
 
-
 char* getNameFromMember(Member member)
 {
     if(member == NULL)
@@ -167,7 +163,7 @@ int* copyAmount(int* amount)
     {
         return NULL;
     }
-    int* new_amount = malloc(sizeof(int));   
+    int* new_amount = malloc(sizeof(int*));
     if(new_amount == NULL)
     {
         free(new_amount);
@@ -182,7 +178,6 @@ void amountDestroy(int* amount)
     free(amount);
 }
 
-
 int amountCompare(Member member1, Member member2)
 {
     int amount_delta = (getMemberAmount(member1)) - (getMemberAmount(member2));
@@ -196,4 +191,16 @@ int amountCompare(Member member1, Member member2)
 int* getMemberAmount(Member member)
 {
     return member->amount;
+}
+
+void memberAmountChange(Member member, int change)
+{
+    if(change>0)
+    {
+        *(member->amount) = *(member->amount) + 1;
+    }
+    else
+    {
+        *(member->amount) = *(member->amount) - 1;
+    }
 }
