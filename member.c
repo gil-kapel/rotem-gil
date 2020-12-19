@@ -44,7 +44,7 @@ Member memberCreate(char* name, int* id)
         return NULL;
     }
     member->member_id = copyMemberId(id);
-    int* init_amount = malloc(sizeof(int*));
+    int* init_amount = malloc(sizeof(*init_amount));
     if(init_amount == NULL)
     {
         return NULL;
