@@ -7,7 +7,6 @@
 
 typedef struct Event_t *Event;
 
-
 Event eventCreate(char* name, int id, Date date);//, PriorityQueue members_per_event);// change in em
 
 //Creates a copy of target event
