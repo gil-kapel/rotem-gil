@@ -450,7 +450,7 @@ EventManagerResult emRemoveMemberFromEvent(EventManager em, int member_id, int e
 	}	
 	if(!isEventFromId(em, event_id))
 	{
-		return EM_INVALID_EVENT_ID;
+		return EM_EVENT_ID_NOT_EXISTS;
 	}
 	if(!findMemberById(em, member_id))
 	{
