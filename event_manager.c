@@ -12,8 +12,8 @@
 #define EQUAL 0
 #define DAY 1
 #define INVALID -1
-#define SUBTRUCT 1
-#define RAISE -1
+#define SUBTRUCT -1
+#define RAISE 1
 
 struct EventManager_t 
 {
