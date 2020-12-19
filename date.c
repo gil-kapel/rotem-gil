@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "date.h"
+
 #define NONE 0
 #define MIN_DAY 1
 #define MAX_DAY 30
@@ -45,13 +46,11 @@ Date dateCreate(int day, int month, int year)
 //Deallocates an existing Date
 void dateDestroy(Date date)
 {
-    if(date == NULL)
+    if(date)
     {
-        return;
+        free(date);
     }
-    free(date);
 }
-
 //Creates a copy of target Date
 Date dateCopy(Date date)
 {
@@ -92,7 +91,6 @@ int dateCompare(Date date1, Date date2)
     return ((dateInDays(date1)) - (dateInDays(date2)));
 }
 
-
 //Increases the date by one day
 void dateTick(Date date)
 {
@@ -118,7 +116,3 @@ void dateTick(Date date)
         (date->day)++;
     }
 }
-
-
-
-
