@@ -570,7 +570,7 @@ static void printCurrentEvent(Event event, FILE* fp)
 
 void emPrintAllEvents(EventManager em, const char* file_name)
 {
-	FILE* fp = fopen(file_name, "a");
+	FILE* fp = fopen(file_name, "w");
 	if(!fp)
 	{
 		return;
