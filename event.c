@@ -58,6 +58,10 @@ static char* eventNameCopy(char* new_str)
 
 Event eventCreate(char* name, int id, Date date)
 {
+    if(name ==  NULL || date == NULL)
+    {
+        return NULL;
+    }
     Event event = malloc(sizeof(*event));
     if (event == NULL) 
     {
@@ -111,10 +115,8 @@ bool eventCompare(Event event1, Event event2)
     {
         return NULL;
     }
-    int name_res = strcmp(event1->event_name,event2->event_name);
     int id_res = ((event1->event_id) - (event2->event_id));
-    int date_res = dateCompare(event1->date, event2->date);
-    if((!name_res) && (!id_res) && (!date_res))
+    if(!id_res)
     {
         return true;
     }
@@ -156,4 +158,20 @@ Date getEventdate(Event event)
 char* getNameFromEvent(Event event)
 {
     return event->event_name;
+}
+
+int eventDateCompare(Event event1, Event event2)
+{
+    return dateCompare(event2->date, event1->date);
+}
+
+Event eventDateChange(Event event, Date new_date)
+{
+    if(event == NULL)
+    {
+        return NULL;
+    }
+    Event new_event = eventCopy(event);
+    new_event->date = dateCopy(new_date);
+    return new_event;
 }
