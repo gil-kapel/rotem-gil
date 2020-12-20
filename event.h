@@ -27,4 +27,8 @@ Date getEventdate(Event event);
 
 char* getNameFromEvent(Event event);
 
+int eventDateCompare(Event event1, Event event2);
+
+Event eventDateChange(Event event, Date new_date);
+
 #endif //EVENT_H_
