@@ -22,6 +22,8 @@ struct EventManager_t
 	Date first_date;
 };
 
+//events functions:
+
 static PQElement copyEventInEm(PQElement elem)
 {
 	if(elem == NULL)
@@ -44,29 +46,12 @@ static bool equalEventInEm(PQElement elem1,PQElement elem2)
 	return eventCompare(elem1,elem2);
 }
 
-static PQElementPriority copyDatePriority(PQElementPriority priority)
+static int emCompareDate(PQElementPriority priority1, PQElementPriority priority2)
 {
-	if(priority == NULL)
-	{
-		return NULL;
-	}
-	return dateCopy(priority);
-}
-
-static void freeDatePriority(PQElementPriority date)
-{
-	if(date)
-	{
-		dateDestroy(date);
-	}
-}
-
-static int compareDatePriority(PQElementPriority priority1, PQElementPriority priority2)
-{
-	return dateCompare((void*)priority2,(void*)priority1);
+	return eventDateCompare(priority1, priority2);
 } 
 
-//members functions
+//members functions:
 
 static PQElement copymemberInEm(PQElement elem)
 {
@@ -103,7 +88,7 @@ EventManager createEventManager(Date date)
     {
 		return NULL;
 	}
-	em->events = pqCreate(copyEventInEm, freeEventInEm, equalEventInEm, copyDatePriority, freeDatePriority, compareDatePriority);
+	em->events = pqCreate(copyEventInEm, freeEventInEm, equalEventInEm, copyEventInEm, freeEventInEm, emCompareDate);
 	if(!(em->events))
 	{
 		return NULL;
@@ -143,9 +128,11 @@ void destroyEventManager(EventManager em)
 static bool isEventFromId(EventManager em, int id)
 {
 	PQ_FOREACH(Event, current, em->events)
-	if ((getEventId(current)) == id)
 	{
-		return true;
+		if ((getEventId(current)) == id)
+		{
+			return true;
+		}
 	}
 	return false;
 }
@@ -207,7 +194,8 @@ EventManagerResult emAddEventByDate(EventManager em, char* event_name, Date date
 		destroyEventManager(em);
 		return EM_OUT_OF_MEMORY;
 	}
-	PriorityQueueResult res = pqInsert(em->events, new_event, date);// what happened when events is NULL
+	PriorityQueueResult res = pqInsert(em->events, new_event, new_event);// what happened when events is NULL
+	eventDestroy(new_event);
 	if(res == PQ_OUT_OF_MEMORY)
 	{
 		destroyEventManager(em);
@@ -218,7 +206,6 @@ EventManagerResult emAddEventByDate(EventManager em, char* event_name, Date date
 
 static Date tickDateByDays(Date date, int days)
 {
-	//Date chosen_date = dateCopy(em->first_date);
 	while (days > VALID_DATE)
 	{
 		dateTick(date);
@@ -244,6 +231,7 @@ EventManagerResult emAddEventByDiff(EventManager em, char* event_name, int days,
 	Date date = dateCopy(em->first_date);
 	tickDateByDays(date, days);
 	EventManagerResult res = emAddEventByDate(em, event_name, date, event_id);
+	free(date);
 	return res;
 }
 
@@ -276,17 +264,21 @@ EventManagerResult emRemoveEvent(EventManager em, int event_id)
 	}
 	PQ_FOREACH(Member, current, getMembersPerEvent(event_to_remove))
 	{
-		memberAmountChange(current, SUBTRUCT);
+		Member new_member = memberAmountChange(current, SUBTRUCT);
+		PriorityQueueResult res1 = pqChangePriority(em->members, new_member, current, new_member);
+		memberDestroy(new_member);
+		if(res1 == PQ_OUT_OF_MEMORY)
+		{
+			destroyEventManager(em);
+			return EM_OUT_OF_MEMORY;
+		}
 	}
-
 	PriorityQueueResult res = pqRemoveElement(em->events, event_to_remove);
 	if (res == PQ_OUT_OF_MEMORY)
 	{
 		destroyEventManager(em);
 		return EM_OUT_OF_MEMORY;
 	}
-
-
 	return EM_SUCCESS;
 }
 
@@ -308,22 +300,23 @@ EventManagerResult emChangeEventDate(EventManager em, int event_id, Date new_dat
 	{
 		return EM_EVENT_ID_NOT_EXISTS;
 	}
-	Event event_for_change = eventCopy(getEventFromId(em, event_id));
-	char* name = getNameFromEvent(event_for_change);
-	Date old_date = dateCopy(getEventdate(event_for_change));
-	if(eventNameinSameDate(em, name, new_date))
+	Event old_event = eventCopy(getEventFromId(em, event_id));
+	Event new_event = eventDateChange(getEventFromId(em, event_id), new_date);
+	if(eventNameinSameDate(em, getNameFromEvent(new_event), new_date))
 	{
-		eventDestroy(event_for_change);
-		return EM_EVENT_ALREADY_EXISTS;
+		eventDestroy(old_event);
+		eventDestroy(new_event);
+		return EM_EVENT_ALREADY_EXISTS;	
 	}
-	PriorityQueueResult res = pqChangePriority(em->events, event_for_change, old_date, new_date);
+	PriorityQueueResult res = pqChangePriority(em->events, new_event, old_event, new_event);
+	eventDestroy(old_event);
+	eventDestroy(new_event);
 	if(res == PQ_OUT_OF_MEMORY)
 	{
-		eventDestroy(event_for_change);
 		destroyEventManager(em);
 		return EM_OUT_OF_MEMORY;
-    }
-		return EM_SUCCESS;
+	}
+	return EM_SUCCESS;
 } 
 
 static bool findMemberById(EventManager em, int member_id)
@@ -366,13 +359,14 @@ EventManagerResult emAddMember(EventManager em, char* member_name, int member_id
 	}
 	int* id = copyMemberId(&member_id);
 	Member new_member = memberCreate(member_name, id);
+	free(id);
 	if(!new_member)
 	{
-		free(id);
 		destroyEventManager(em);//is it really necessery
 		return EM_OUT_OF_MEMORY;
 	}
 	PriorityQueueResult res = pqInsert(em->members, new_member, new_member);// what happened when events is NULL
+	memberDestroy(new_member);
 	if(res == PQ_OUT_OF_MEMORY)
 	{
 		destroyEventManager(em);
@@ -421,16 +415,26 @@ EventManagerResult emAddMemberToEvent(EventManager em, int member_id, int event_
 	{
 		return EM_EVENT_AND_MEMBER_ALREADY_LINKED;
 	}
-	Member new_member = getMemberById(em, member_id);
+	Member old_member = memberCopy(getMemberById(em, member_id));
+	Member new_member =  memberAmountChange(old_member, RAISE);
 	Event current_event = getEventFromId(em, event_id);
-	PriorityQueueResult res = pqInsert(getMembersPerEvent(current_event), new_member, &member_id);//is it ok to put em->events->otherqueue?
-	if(res == PQ_OUT_OF_MEMORY)
+	PriorityQueueResult res2 = pqInsert(getMembersPerEvent(current_event), new_member, &member_id);
+	if(res2 == PQ_OUT_OF_MEMORY)
 	{
+		memberDestroy(old_member);
 		memberDestroy(new_member);
 		destroyEventManager(em);
 		return EM_OUT_OF_MEMORY;
 	}
-	memberAmountChange(new_member, RAISE);
+	PriorityQueueResult res1 = pqChangePriority(em->members, new_member, old_member, new_member);
+	memberDestroy(old_member);
+	memberDestroy(new_member);
+	if(res1 == PQ_OUT_OF_MEMORY)
+	{
+		destroyEventManager(em);
+		return EM_OUT_OF_MEMORY;
+	}
+
 	return EM_SUCCESS;
 }
 
@@ -442,12 +446,12 @@ EventManagerResult emRemoveMemberFromEvent(EventManager em, int member_id, int e
 	}
 	if(event_id < VALID_ID)
 	{
-		return EM_INVALID_EVENT_ID;
+	return EM_INVALID_EVENT_ID;
 	}
 	if(member_id < VALID_ID)
 	{
-		return EM_INVALID_MEMBER_ID;
-	}	
+	return EM_INVALID_MEMBER_ID;
+	}
 	if(!isEventFromId(em, event_id))
 	{
 		return EM_EVENT_ID_NOT_EXISTS;
@@ -460,27 +464,47 @@ EventManagerResult emRemoveMemberFromEvent(EventManager em, int member_id, int e
 	{
 		return EM_EVENT_AND_MEMBER_NOT_LINKED;
 	}
-	Member member_to_delete = getMemberById(em, member_id);
-	PriorityQueueResult res = pqRemoveElement(getMembersPerEvent(getEventFromId(em, event_id)), member_to_delete);
-	if (res == PQ_OUT_OF_MEMORY)
+	Member old_member = memberCopy(getMemberById(em, member_id));
+	Member new_member = memberAmountChange(old_member, SUBTRUCT);
+	PriorityQueueResult res1 = pqChangePriority(em->members, new_member, old_member, new_member);
+	if(res1 == PQ_OUT_OF_MEMORY)
+	{
+		memberDestroy(old_member);
+		memberDestroy(new_member);
+		destroyEventManager(em);
+		return EM_OUT_OF_MEMORY;
+	}
+	PriorityQueueResult res2 = pqRemoveElement(getMembersPerEvent(getEventFromId(em, event_id)), old_member);
+	memberDestroy(old_member);
+	memberDestroy(new_member);
+	if (res2 == PQ_OUT_OF_MEMORY)
 	{
 		destroyEventManager(em);
 		return EM_OUT_OF_MEMORY;
 	}
-	memberAmountChange(member_to_delete, SUBTRUCT);
+
 	return EM_SUCCESS;
 }
 
-static PriorityQueueResult remove_prev_events(EventManager em)
+static EventManagerResult remove_prev_events(EventManager em)
 {
-
-	while(dateCompare(getEventdate(pqGetFirst(em->events)), em->first_date) < 0)
+	Event first_event = pqGetFirst(em->events);
+	while(dateCompare(getEventdate(first_event), em->first_date) < 0)
 	{
-		PriorityQueueResult res = pqRemove(em->events);// if fail check pqremoveelement
-		if(res == PQ_NULL_ARGUMENT)
+		PQ_FOREACH(Member, current, getMembersPerEvent(first_event))
 		{
-			return EM_NULL_ARGUMENT;
+			EventManagerResult res1 = emRemoveMemberFromEvent(em, *(getMemberId(current)), getEventId(first_event));
+			if(res1 != EM_SUCCESS)
+			{
+				return EM_OUT_OF_MEMORY;
+			}
 		}
+		PriorityQueueResult res2 = pqRemove(em->events);
+		if(res2 == PQ_NULL_ARGUMENT)
+		{
+			return EM_OUT_OF_MEMORY;
+		}
+		first_event = pqGetFirst(em->events);
 	}
 	return EM_SUCCESS;
 }
@@ -572,8 +596,11 @@ void emPrintAllResponsibleMembers(EventManager em, const char* file_name)
 	}
 	PQ_FOREACH(Member, current, em->members)
 	{
-		printCurrentMember(current, fp);
-		fprintf(fp, "\n");// is 'a' needed again?
+		if(*(getMemberAmount(current)) > 0)
+		{
+			printCurrentMember(current, fp);
+			fprintf(fp, "\n");// is 'a' needed again?
+		}
 	}
 	fclose(fp);	
 }
