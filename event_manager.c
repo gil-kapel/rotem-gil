@@ -115,16 +115,6 @@ void destroyEventManager(EventManager em)
 	free(em);
 }
 
-// static Event getEventFromName(EventManager em, char* name)
-// {
-// 	PQ_FOREACH(Event, current, em->events)
-// 	if(!strcmp(getEventName(current), name))
-// 	{
-// 		return current;
-// 	}
-// 	return NULL;
-// }
-
 static bool isEventFromId(EventManager em, int id)
 {
 	PQ_FOREACH(Event, current, em->events)
@@ -136,20 +126,6 @@ static bool isEventFromId(EventManager em, int id)
 	}
 	return false;
 }
-
-// static bool eventNameinSameDate(EventManager em, char* event_name, Date date)
-// {
-// 	Event event_in_em = (getEventFromName(em, event_name));
-// 	if(event_in_em)
-// 	{
-// 		Date date_in_em = (getEventdate(event_in_em));
-// 		if(!dateCompare(date_in_em, date))
-// 		{
-// 			return true;
-// 		}
-// 	}
-// 	return false;
-// }
 
 static bool eventNameinSameDate(EventManager em, char* event_name, Date date)
 {
@@ -194,7 +170,7 @@ EventManagerResult emAddEventByDate(EventManager em, char* event_name, Date date
 		destroyEventManager(em);
 		return EM_OUT_OF_MEMORY;
 	}
-	PriorityQueueResult res = pqInsert(em->events, new_event, new_event);// what happened when events is NULL
+	PriorityQueueResult res = pqInsert(em->events, new_event, new_event);
 	eventDestroy(new_event);
 	if(res == PQ_OUT_OF_MEMORY)
 	{
@@ -323,7 +299,7 @@ static bool findMemberById(EventManager em, int member_id)
 {
 	PQ_FOREACH(Member, current, em->members)
 	{
-		if ((*getMemberId(current)) == member_id)
+		if (getMemberId(current) == member_id)
 		{
 			return true;
 		}
@@ -335,7 +311,7 @@ static Member getMemberById(EventManager em, int member_id)
 {
 	PQ_FOREACH(Member, current, em->members)
 	{
-		if ((*getMemberId(current)) == member_id)
+		if (getMemberId(current) == member_id)
 		{
 			return current;
 		}
@@ -357,15 +333,8 @@ EventManagerResult emAddMember(EventManager em, char* member_name, int member_id
 	{
 		return EM_MEMBER_ID_ALREADY_EXISTS;
 	}
-	int* id = copyMemberId(&member_id);
-	Member new_member = memberCreate(member_name, id);
-	free(id);
-	if(!new_member)
-	{
-		destroyEventManager(em);//is it really necessery
-		return EM_OUT_OF_MEMORY;
-	}
-	PriorityQueueResult res = pqInsert(em->members, new_member, new_member);// what happened when events is NULL
+	Member new_member = memberCreate(member_name, member_id);
+	PriorityQueueResult res = pqInsert(em->members, new_member, new_member);
 	memberDestroy(new_member);
 	if(res == PQ_OUT_OF_MEMORY)
 	{
@@ -380,7 +349,7 @@ static bool eventWithSameMember(EventManager em, int member_id, int event_id)
 	Event chosen_event = getEventFromId(em, event_id);
 	PQ_FOREACH(Member, iterator, getMembersPerEvent(chosen_event))//can we point on a queue and than on an elem inside the queue
 	{
-		if (*(getMemberId(iterator)) == member_id)
+		if (getMemberId(iterator) == member_id)
 		{
 			return true;
 		}
@@ -418,7 +387,7 @@ EventManagerResult emAddMemberToEvent(EventManager em, int member_id, int event_
 	Member old_member = memberCopy(getMemberById(em, member_id));
 	Member new_member =  memberAmountChange(old_member, RAISE);
 	Event current_event = getEventFromId(em, event_id);
-	PriorityQueueResult res2 = pqInsert(getMembersPerEvent(current_event), new_member, &member_id);
+	PriorityQueueResult res2 = pqInsert(getMembersPerEvent(current_event), new_member, new_member);
 	if(res2 == PQ_OUT_OF_MEMORY)
 	{
 		memberDestroy(old_member);
@@ -494,7 +463,7 @@ static EventManagerResult remove_prev_events(EventManager em)
 		Member first_member = pqGetFirst(getMembersPerEvent(first_event));
 		while(first_member)
 		{
-			EventManagerResult res1 = emRemoveMemberFromEvent(em, *(getMemberId(first_member)), getEventId(first_event));
+			EventManagerResult res1 = emRemoveMemberFromEvent(em, getMemberId(first_member), getEventId(first_event));
 			if(res1 != EM_SUCCESS)
 			{
 				return EM_OUT_OF_MEMORY;
@@ -586,7 +555,7 @@ void emPrintAllEvents(EventManager em, const char* file_name)
 static void printCurrentMember(Member member, FILE* fp)
 {
 	fprintf(fp, "%s", getMemberName(member));
-	fprintf(fp,",%d", *(getMemberAmount(member)));
+	fprintf(fp,",%d", getMemberAmount(member));
 }
 
 void emPrintAllResponsibleMembers(EventManager em, const char* file_name)
@@ -598,7 +567,7 @@ void emPrintAllResponsibleMembers(EventManager em, const char* file_name)
 	}
 	PQ_FOREACH(Member, current, em->members)
 	{
-		if(*(getMemberAmount(current)) > 0)
+		if(getMemberAmount(current) > 0)
 		{
 			printCurrentMember(current, fp);
 			fprintf(fp, "\n");// is 'a' needed again?

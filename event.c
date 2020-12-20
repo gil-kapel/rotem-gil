@@ -31,30 +31,10 @@ static bool equal_member(PQElement elem1,PQElement elem2)
 	return memberCompare(elem1,elem2);
 }
 
-static PQElementPriority copy_member_id(PQElementPriority priority)//check it out
-{
-	return copyMemberId(priority);
-}
-
-static void free_member_id(PQElementPriority priority)
-{
-	freeMemberId(priority);
-}
-
 static int compare_member_id(PQElementPriority priority1, PQElementPriority priority2)
 {
 	return memberIdCompare(priority1, priority2);
 } 
-
-static char* eventNameCopy(char* new_str)
-{
-    if(new_str == NULL)
-    {
-        return NULL;
-    }
-    char* copy_str = malloc(strlen(new_str) + 1);
-    return (copy_str != NULL) ? strcpy(copy_str, new_str) : NULL;
-}
 
 Event eventCreate(char* name, int id, Date date)
 {
@@ -67,14 +47,15 @@ Event eventCreate(char* name, int id, Date date)
     {
         return NULL;
     }
-    event->event_name = eventNameCopy(name);
+    event->event_name = malloc(strlen(name) + 1);
     if (event->event_name == NULL) 
     {
-        eventDestroy(event);//
         return NULL;
     }
+    strcpy(event->event_name, name);
     event->event_id = id;
-    event->members_per_event = pqCreate(copy_member, free_member, equal_member, copy_member_id, free_member_id, compare_member_id);
+    event->members_per_event = pqCreate(copy_member, free_member, equal_member, copy_member, free_member,
+                                        compare_member_id);
     if(event->members_per_event == NULL)
     {
         eventDestroy(event);
@@ -128,7 +109,7 @@ int getEventId(Event event)
     return event->event_id;
 }
 
-char* getEventName(Event event)//
+char* getEventName(Event event)
 {
     if(event == NULL)
     {
