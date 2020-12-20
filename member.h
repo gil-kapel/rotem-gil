@@ -36,6 +36,6 @@ int memberIdCompare(int* member_id1, int* member_id2);
 
 int* getMemberAmount(Member member);
 
-void memberAmountChange(Member member, int change);
+Member memberAmountChange(Member member, int change);
 
 #endif //MEMBER_H_
