@@ -491,13 +491,15 @@ static EventManagerResult remove_prev_events(EventManager em)
 	Event first_event = pqGetFirst(em->events);
 	while(dateCompare(getEventdate(first_event), em->first_date) < 0)
 	{
-		PQ_FOREACH(Member, current, getMembersPerEvent(first_event))
+		Member first_member = pqGetFirst(getMembersPerEvent(first_event));
+		while(first_member)
 		{
-			EventManagerResult res1 = emRemoveMemberFromEvent(em, *(getMemberId(current)), getEventId(first_event));
+			EventManagerResult res1 = emRemoveMemberFromEvent(em, *(getMemberId(first_member)), getEventId(first_event));
 			if(res1 != EM_SUCCESS)
 			{
 				return EM_OUT_OF_MEMORY;
 			}
+			first_member = pqGetFirst(getMembersPerEvent(first_event));
 		}
 		PriorityQueueResult res2 = pqRemove(em->events);
 		if(res2 == PQ_NULL_ARGUMENT)
