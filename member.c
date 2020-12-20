@@ -86,8 +86,7 @@ bool memberCompare(Member member1, Member member2)
     }
     int name_res = strcmp(member1->member_name,member2->member_name);
     int id_res = (*(member1->member_id) - *(member2->member_id));
-    //int amount_res = ((member1->amount) - (member2->amount));
-    if((!name_res) && (!id_res))// && (!amount_res))
+    if((!name_res) && (!id_res))
     {
         return true;
     }
@@ -139,13 +138,7 @@ void freeMemberId(int* member_id)
 
 int memberIdCompare(int* member_id1, int* member_id2)
 {
-    // if((member_id1 == NULL) || (member_id2 == NULL))
-    // {
-    //     return NULL;
-    // } 
-    int first_id = *member_id1;
-    int second_id = *member_id2;
-    return (first_id - second_id);
+    return *(member_id2) - *(member_id1);
 }
 
 char* getNameFromMember(Member member)
@@ -180,12 +173,12 @@ void amountDestroy(int* amount)
 
 int amountCompare(Member member1, Member member2)
 {
-    int amount_delta = (getMemberAmount(member1)) - (getMemberAmount(member2));
-    if(!amount_delta)
+    int amount_delta = *(getMemberAmount(member1)) - *(getMemberAmount(member2));
+    if(amount_delta)
     {
         return amount_delta;
     }
-    return (getMemberId(member1)-getMemberId(member2));
+    return *(getMemberId(member2))-*(getMemberId(member1));
 }
 
 int* getMemberAmount(Member member)
@@ -193,14 +186,20 @@ int* getMemberAmount(Member member)
     return member->amount;
 }
 
-void memberAmountChange(Member member, int change)
+Member memberAmountChange(Member member, int change)
 {
-    if(change>0)
+    if(member == NULL)
     {
-        *(member->amount) = *(member->amount) + 1;
+        return NULL;
     }
-    else
+    Member new_member = memberCopy(member);
+    if(change > 0)
     {
-        *(member->amount) = *(member->amount) - 1;
+        *(new_member->amount) = *(member->amount) + 1;
     }
+    else if(change < 0)
+    {
+        *(new_member->amount) = *(member->amount) - 1;
+    }
+    return new_member;
 }
